@@ -3,19 +3,10 @@ var app = express();
 var path = require('path');
 var MongoClient = require("mongodb").MongoClient;
 
-var url = "mongodb://localhost:27017/memoURL";
+var url = process.env.MONGOLAB_URI;
 
 var regExpURL = /^https?:\/\/(\S+\.)?(\S+\.)(\S+)\S*/;
 var regExpNum = /[0-9][0-9]*/;
-
-// create a database and table if not existing
-MongoClient.connect(url, function (err, db) {
-  if (err) throw err;
-  db.createCollection("urls", function (err, res) {
-    if (err) throw err;
-    db.close();
-  });
-});
 
 const PORT = process.env.PORT || 3000;
 console.log('Up on the port ' + PORT);
