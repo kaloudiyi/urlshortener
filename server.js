@@ -5,7 +5,7 @@ var MongoClient = require("mongodb").MongoClient;
 
 var url = process.env.MONGOLAB_URI;
 
-var regExpURL = /^https?:\/\/(\S+\.)?(\S+\.)(\S+)\S*/;
+var regExpURL = /https?:\/\/(\S+\.)?(\S+\.)(\S+)\S*/;
 var regExpNum = /[0-9][0-9]*/;
 
 const PORT = process.env.PORT || 3000;
@@ -24,23 +24,21 @@ app.get('/new/*', function (req, res) {
     MongoClient.connect(url, function (err, db) {
       var colURL = db.collection('urls');
       colURL
-        .find({ original_url: { $eq: newURL } })
-        .toArray(function (err, documents) {
-          if (err) {
-            throw err;
-          } else {
-            if (documents.length == 0) {
-              colURL.count(function (err, nb) {
-                var shURL = req.protocol + '://' + req.get('host') + "/" + nb;
-                var obj = { original_url: newURL, short_url: shURL };
-                colURL.insert(obj);
+        .findOne({ original_url: newURL })
+        .then(function (doc) {
+          if (!doc) { // not found
+            colURL.count(function (err, nb) {
+              var shURL = req.protocol + '://' + req.get('host') + "/" + nb;
+              var obj = { original_url: newURL, short_url: shURL };
+              colURL.insertOne(obj, function (err, result) {
+                if (err) throw err;
                 delete obj._id;
                 db.close();
                 res.json(obj);
               });
-            } else {
-              res.status(500).json({ error: 'URL already shortened.' });
-            }
+            });
+          } else { // founded
+            res.status(500).json({ error: 'URL already shortened.' });
           }
         });
     });
